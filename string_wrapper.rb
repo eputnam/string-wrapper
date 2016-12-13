@@ -5,10 +5,14 @@ class StringWrapper < Parser::Rewriter
   end
 
   def on_str(node)
+    puts node.loc
     if node.loc.respond_to?(:heredoc_body)
       insert_before(node.loc.expression, "_(")
       insert_after(node.loc.expression, ")")
-    else
+    elsif node.loc.respond_to?(:begin) # avoid constants, like __FILE__, which should not be marked
+      # do not mark empty strings, which are just two quotes
+      return if node.loc.expression.length == 2
+
       insert_before(node.loc.begin, "_(")
       insert_after(node.loc.end, ")")
     end
