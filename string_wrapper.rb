@@ -1,3 +1,6 @@
+require 'pry'
+require 'pry-nav'
+
 class StringWrapper < Parser::Rewriter
   def on_dstr(node)
     insert_before(node.loc.begin, "_(")
@@ -23,15 +26,29 @@ class StringWrapper < Parser::Rewriter
 
   def on_send(node)
     method_name = node.loc.selector.source
-    if ((method_name == 'require') || # ignore requires
-      (method_name == "_") ||         # ignore marked strings
-      (/\[.*\]/.match method_name))   # ignore hash keys
-      return
+    return if method_name == 'require' ||   # ignore requires
+              method_name == "_" ||         # ignore marked strings
+              /\[.*\]/.match(method_name) || # ignore hash keys
+             method_name == 'debug'         # skip debug message
+    if method_name == "raise"
+      receiver_node, method_name, *arg_nodes = *node
+      if !arg_nodes.empty? && arg_nodes[0].type == :const
+        # skip errors that are only logged in debug mode
+        return if arg_nodes[0].loc.name.source == "DevError"
+      end
     end
     super
   end
 
   def on_regexp(node)
+    return
+  end
+
+  def on_array(node)
+    return
+  end
+
+  def on_xstr(node)
     return
   end
 end
