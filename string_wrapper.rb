@@ -18,6 +18,9 @@ class StringWrapper < Parser::Rewriter
       return if str == ""         # ignore empty strings
       return if str !~ /[A-Za-z]/ # ignore non-text strings
       return if str =~ /^\.*\//   # ignore many file paths
+      return if str =~ /([Tt][Rr][Uu][Ee])|([Ff][Aa][Ll][Ss][Ee])/ #ignore true/false
+      return if str =~ /[Aa]bsent|[Pp]resent/ #ignore ensure values
+      return if str == "w"
 
       insert_before(node.loc.begin, "_(")
       insert_after(node.loc.end, ")")
@@ -29,7 +32,6 @@ class StringWrapper < Parser::Rewriter
     return if method_name == 'require' ||   # ignore requires
               method_name == "_" ||         # ignore marked strings
               /\[.*\]/.match(method_name) || # ignore hash keys
-             method_name == 'debug'         # skip debug message
     if method_name == "raise"
       receiver_node, method_name, *arg_nodes = *node
       if !arg_nodes.empty? && arg_nodes[0].type == :const
