@@ -3,8 +3,13 @@ require 'pry-nav'
 
 class StringWrapper < Parser::Rewriter
   def on_dstr(node)
-    insert_before(node.loc.begin, "_(")
-    insert_after(node.loc.end, ")")
+    if node.loc.respond_to?(:heredoc_body)
+      insert_before(node.loc.expression, "_(")
+      insert_after(node.loc.expression, ")")
+    elsif node.loc.respond_to?(:begin)
+      insert_before(node.loc.begin, "_(")
+      insert_after(node.loc.end, ")")
+    end
   end
 
   def on_str(node)
@@ -18,9 +23,9 @@ class StringWrapper < Parser::Rewriter
       return if str == ""         # ignore empty strings
       return if str !~ /[A-Za-z]/ # ignore non-text strings
       return if str =~ /^\.*\//   # ignore many file paths
-      return if str =~ /([Tt][Rr][Uu][Ee])|([Ff][Aa][Ll][Ss][Ee])/ #ignore true/false
-      return if str =~ /[Aa]bsent|[Pp]resent/ #ignore ensure values
-      return if str == "w"
+      return if str =~ /(^[Tt][Rr][Uu][Ee])|(^[Ff][Aa][Ll][Ss][Ee])/ #ignore true/false
+      return if str =~ /^[Aa]bsent|^[Pp]resent/ #ignore ensure values
+      return if str == ("w" || "r" || "r+")
 
       insert_before(node.loc.begin, "_(")
       insert_after(node.loc.end, ")")
@@ -29,9 +34,7 @@ class StringWrapper < Parser::Rewriter
 
   def on_send(node)
     method_name = node.loc.selector.source
-    return if method_name == 'require' ||   # ignore requires
-              method_name == "_" ||         # ignore marked strings
-              /\[.*\]/.match(method_name) || # ignore hash keys
+    return if !/puts|raise|.*[Ee]rror|[Dd]ebug|fail/.match(method_name)
     if method_name == "raise"
       receiver_node, method_name, *arg_nodes = *node
       if !arg_nodes.empty? && arg_nodes[0].type == :const
