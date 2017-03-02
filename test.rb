@@ -1,26 +1,27 @@
 require 'parser/current'
 
-cat = _(<<-EOM)
+cat = <<-EOM
 cat
 EOM
-puts _("a #{cat}")
-puts _("a cat")
+puts "a #{cat}"
+puts "a cat"
 options = {}
 options['key']
 regex = /^(.+)\[/
 function('args')
-Puppet::ParseError _("Something went wrong with parsing")
-Puppet::Error _("Something went wrong")
-Puppet::Debug _("Something happened")
-ArgumentError _("Bad argument")
-fail(_('Something went wrong'))
-raise Puppet::ParseError _("Oh snap!")
+Puppet::ParseError "Something went wrong with parsing"
+Puppet::Error "Something went wrong"
+Puppet::Debug "Something happened"
+ArgumentError "Bad argument"
+fail('Something went wrong')
+raise Puppet::ParseError "Oh snap!"
 
+something = "something"
 
 case testvar
-when _("onething")
+when "onething"
   function()
-  raise Puppet::Error _("Something when wrong here")
-when _("anotherthing")
+  raise Puppet::Error "Something when wrong here"
+when "anotherthing"
   function2()
 end

@@ -23,10 +23,11 @@ class StringWrapper < Parser::Rewriter
       return if str == ""         # ignore empty strings
       return if str !~ /[A-Za-z]/ # ignore non-text strings
       return if str =~ /^\.*\//   # ignore many file paths
-      return if str =~ /(^[Tt][Rr][Uu][Ee])|(^[Ff][Aa][Ll][Ss][Ee])/ #ignore true/false
-      return if str =~ /^[Aa]bsent|^[Pp]resent/ #ignore ensure values
-      return if str == ("w" || "r" || "r+")
-
+      #return if str =~ /^true|^false/ #ignore true/false
+      #return if str =~ /^[Aa]bsent|^[Pp]resent/ #ignore ensure values
+      #return if str =~ /^w$|^r$|^w\+$|^r\+$/ #ignore file modes
+      #ignore strings with no whitespace - are typically keywords or interpolation statements and cover the above commented-out statements
+      return if str =~ /^\S*$/
       insert_before(node.loc.begin, "_(")
       insert_after(node.loc.end, ")")
     end
@@ -34,7 +35,7 @@ class StringWrapper < Parser::Rewriter
 
   def on_send(node)
     method_name = node.loc.selector.source
-    return if !/puts|raise|.*[Ee]rror|[Dd]ebug|fail/.match(method_name)
+    return if !/call_function|function_deprecation|new(param|function|property)|puts|raise|desc|\+|.*[Ee]rror|[Dd]ebug|warning|warn|fail|notice/.match(method_name)
     if method_name == "raise"
       receiver_node, method_name, *arg_nodes = *node
       if !arg_nodes.empty? && arg_nodes[0].type == :const
